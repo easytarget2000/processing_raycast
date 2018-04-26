@@ -4,6 +4,8 @@ class Player {
 
   private float direction;
 
+  private float deltaDirection = 0.05f;
+
   private float paces = 0f;
 
   //function Player(x, y, direction) {
@@ -18,7 +20,7 @@ class Player {
     position = position_;
     direction = direction_;
   }
-  
+
   PVector getPosition() {
     return position;
   }
@@ -33,15 +35,26 @@ class Player {
 
     if (map.get(position.x + deltaX, position.y) <= 0) {
       position.x += deltaX;
+    } else {
+      deltaDirection += 0.5f;
     }
 
     if (map.get(position.x, position.y + deltaY) <= 0) {
       position.y += deltaY;
+    } else {
+      deltaDirection += 1f;
     }
 
     paces += distance;
   }
-  
-  void update() {
+
+  void update(final Map map, final float deltaSeconds) {
+    walk(0.01f, map);
+
+    if (random(1f) > 0.6f) {
+      deltaDirection = 0.01f - random(0.02f);
+    }
+
+    direction += deltaDirection;
   }
 }

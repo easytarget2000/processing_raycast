@@ -42,7 +42,7 @@ class Map {
 
   void update(final float seconds) {
     if (light > 0f) {
-      light = max(this.light - 10 * seconds, 0);
+      light = max(light - 10f * seconds, 0f);
     } else if (random(5f) < seconds) {
       light = 2f;
     }

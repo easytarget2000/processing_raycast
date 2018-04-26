@@ -1,19 +1,35 @@
-public class Camera {
+class Camera {
 
-  private float resolution;
-  private float spacing;
-  private float fov;
-  private float range;
-  private float lightRange;
-  private float scale;
+  protected final float resolution;
 
-  public Camera(final float resolution, final float fov) {
-    this.resolution = resolution;
-    this.spacing = width / resolution;
-    this.fov = fov;
-    this.range = 14f;
-    this.lightRange = 5f;
-    this.scale = (width + height) / 1200f;
+  protected final float spacing;
+
+  protected final float fov;
+
+  protected final float range;
+
+  protected final float lightRange;
+
+  protected final float scale;
+
+  //private OrthographicCamera camera;
+  //private SpriteBatch batch;
+  //private ShapeRenderer shapeRenderer;
+
+  public Camera(final float resolution_, final float fov_) {
+    //this.camera = camera;
+    //this.batch = new SpriteBatch();
+    //this.batch.setProjectionMatrix(camera.combined);
+    //this.shapeRenderer = new ShapeRenderer();
+    //this.shapeRenderer.setProjectionMatrix(camera.combined);
+    //this.width = this.camera.viewportWidth;
+    //this.height = this.camera.viewportHeight;
+    resolution = resolution_;
+    spacing = width / resolution;
+    fov = fov_;
+    range = 14f;
+    lightRange = 5f;
+    scale = (width + height) / 1200;
   }
 
   public void render(Player player, Map map) {
@@ -44,17 +60,17 @@ public class Camera {
   //  }
   //}
 
-  private void drawColumns(final Player player, final Map map) {
-    for (int column = 0; column < resolution; column++) {
+  private void drawColumns(Player player, Map map) {
+    for (int column = 0; column < this.resolution; column++) {
       final float angle = fov * (column / resolution - 0.5f);
       final Ray ray = map.cast(player.getPosition(), player.direction + angle, range);
-      drawColumn(column, ray, angle, map);
+      this.drawColumn(column, ray, angle, map);
     }
   }
 
   //private void drawWeapon(Texture weapon, float paces) {
-  //  float bobX = Math.cos(paces * 2) * this.scale * 6;
-  //  float bobY = Math.sin(paces * 4) * this.scale * 6;
+  //  float bobX = cos(paces * 2) * this.scale * 6;
+  //  float bobY = sin(paces * 4) * this.scale * 6;
   //  float left = this.width * 0.66 + bobX;
   //  float top = this.height * 0.6 + bobY;
   //  batch.begin();
@@ -64,15 +80,17 @@ public class Camera {
 
   private void drawColumn(float column, Ray ray, float angle, Map map) {
     //Texture texture = map.wallTexture;
-    final float left = floor(column * this.spacing);
-    final float width_ = ceil(this.spacing);
-
+    float left = floor(column * this.spacing);
+    float width_ = ceil(this.spacing);
     int hit = -1;
-    while (++hit < ray.getNumOfSteps() && ray.getStep(hit).getHeight() <= 0);
 
-    for (int s = ray.getNumOfSteps() - 1; s >= 0; s--) {
-      final RayStep step = ray.getStep(s);
-      float rainDrops = pow(random(1f), 3) * s;
+    while (++hit < ray.getNumOfSteps() && ray.getStep(hit).getHeight() <= 0);
+    
+    noStroke();
+
+    for (int s = ray.steps.size() - 1; s >= 0; s--) {
+      final RayStep step = ray.steps.get(s);
+      float rainDrops = pow(random(1f), 3f) * s;
       Projection rain = null;
       if (rainDrops > 0f) {
         rain = project(0.1f, angle, step.distance);
@@ -80,28 +98,45 @@ public class Camera {
 
       if (s == hit) {
         //float textureX = floor(texture.getWidth() * step.offset);
-        final Projection wall = project(step.getHeight(), angle, step.distance);
+        final Projection wall = project(step.getHeight(), angle, step.getDistance());
 
+        //batch.begin();
         //batch.draw(texture, (float)left, (float)wall.top, (float)width, (float)wall.height, (int)textureX, 0, 1, texture.getHeight(), false, true);
+        //batch.end();
+        fill(0xFFFFFFFF);
+        rect((float)left, (float)wall.getTop(), (float)width_, (float)wall.getHeight());
 
-        //shapeRenderer.setColor(0, 0, 0, (float)Math.max((step.distance + step.shading) / this.lightRange - map.light, 0));
-        rect(left, wall.getTop(), width_, wall.getHeight());
+        //Gdx.gl.glEnable(GL20.GL_BLEND);
+        //Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        //shapeRenderer.setColor(0, 0, 0, (float)max((step.distance + step.shading) / this.lightRange - map.light, 0));
+        //shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        
+        fill(0f, 0f, 0f, (float)max((step.distance + step.shading) / lightRange - map.light, 0f));
+        rect((float)left, (float)wall.getTop(), (float)width_, (float)wall.getHeight());
+
+        //rect((float)left, (float)wall.getTop(), (float)width_, (float)wall.getHeight());
+        //shapeRenderer.end();
+        //Gdx.gl.glDisable(GL20.GL_BLEND);
       }
 
       if (rain != null) {
-
-        //shapeRenderer.setColor(1, 1, 1, 0.15f);
+        //Gdx.gl.glEnable(GL20.GL_BLEND);
+        //Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        //shapeRenderer.setColor(1, 1, 1, 0.15f);]
+        fill(0x20FFFFFF);
+        //shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         while (--rainDrops > 0) {
-          rect(left, random(rain.getTop()), 1f, rain.getHeight());
+          rect((float)left, (float)(random(rain.top)), 1f, (float)rain.getHeight());
         }
+        //shapeRenderer.end();
       }
     }
   }
 
-  private Projection project(final float height, final float angle, final float distance) {
-    final float z = distance * cos(angle);
-    final float wallHeight = height * height / z;
-    final float bottom = height / 2f * (1f + 1f / z);
+  private Projection project(float height_, float angle, float distance) {
+    float z = distance * cos(angle);
+    float wallHeight = height * height_ / z;
+    float bottom = (height / 2f) * (1f + (1f / z));
     return new Projection(bottom - wallHeight, wallHeight);
   }
 }

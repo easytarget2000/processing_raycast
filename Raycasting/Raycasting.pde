@@ -6,19 +6,24 @@
  * Values
  */
 
+private Engine engine;
+
 /**
  * Lifecycle
  */
 
 void setup() {
-  size(1920, 1080);
-  // fullScreen();
+  fullScreen();
   // fullScreen(2);
   background(0);
+
+  colorMode(HSB, 1f);
+  engine = new Engine();
 }
 
 void draw() {
-    background(0);
+  background(0);
+  engine.tick();
 }
 
 /*
